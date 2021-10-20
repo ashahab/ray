@@ -46,6 +46,9 @@ export JAVA_HOME="$java_home"
 #echo "build --config=manylinux2010" >> /root/.bazelrc
 echo "build --incompatible_linkopts_to_linklibs" >> /root/.bazelrc
 
+# Include debug info e.g. line numbers in published wheels.
+echo "build --copt=-g1" >> /root/.bazelrc
+
 if [[ -n "${RAY_INSTALL_JAVA:-}" ]]; then
   bazel build //java:ray_java_pkg
   unset RAY_INSTALL_JAVA
@@ -90,10 +93,10 @@ for ((i=0; i<${#PYTHONS[@]}; ++i)); do
     fi
 
     # build ray wheel
-    PATH=/opt/python/${PYTHON}/bin:/root/bazel-3.2.0/output:$PATH \
+    PATH=/opt/python/${PYTHON}/bin:$PATH \
     /opt/python/"${PYTHON}"/bin/python setup.py bdist_wheel
     # build ray-cpp wheel
-    PATH=/opt/python/${PYTHON}/bin:/root/bazel-3.2.0/output:$PATH \
+    PATH=/opt/python/${PYTHON}/bin:$PATH \
     RAY_INSTALL_CPP=1 /opt/python/"${PYTHON}"/bin/python setup.py bdist_wheel
     # In the future, run auditwheel here.
     mv dist/*.whl ../.whl/
