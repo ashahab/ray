@@ -16,8 +16,29 @@ from ray.train.constants import ENABLE_DETAILED_AUTOFILLED_METRICS_ENV, \
 from ray.train.session import TrainingResultType, TrainingResult
 from ray.train.session import init_session, get_session, shutdown_session
 from ray.train.utils import construct_path, check_for_failure
+from ray.train.delayed_worker_group import DelayedWorkerGroup
+from ray.train.utils import PropagatingThread, RayDataset
+
+
+from typing import Callable, List, Any, Dict, Optional
+import logging
+import socket
+import time
+import os
+import random
+import math
+import threading
+
+from horovod.runner.common.util import timeout, secret
+
+from horovod.runner.http.http_server import RendezvousServer
+from horovod.ray.utils import detect_nics
+from horovod.runner.gloo_run import (create_slot_env_vars, create_run_env_vars,
+                                     _get_min_start_hosts)
+from horovod.runner.elastic.rendezvous import create_rendezvous_handler
+from horovod.runner.elastic.discovery import HostDiscovery
 from ray.train.worker_group import WorkerGroup
-from ray.train.utils import RayDataset
+from horovod.runner.elastic.driver import ElasticDriver
 
 if TUNE_INSTALLED:
     from ray import tune
@@ -31,7 +52,7 @@ logger = logging.getLogger(__name__)
 
 class BackendConfig:
     """Parent class for configurations of training backend."""
-    elastic: bool = False
+
     @property
     def backend_cls(self):
         raise NotImplementedError
@@ -158,47 +179,45 @@ class CheckpointManager:
         else:
             return None
 
+class RayHostDiscovery(HostDiscovery):
+    """Uses Ray global state to obtain host mapping.
 
-class TuneCheckpointManager(CheckpointManager):
-    def create_logdir(self, log_dir: Optional[Union[str, Path]]):
-        # Don't create logdir when using with Tune.
-        pass
+    Assumes that the whole global state is available for usage."""
 
-    def create_run_dir(self):
-        # Don't create run_dir when using with Tune.
-        pass
+    def __init__(self, use_gpu=False, cpus_per_slot=1, gpus_per_slot=1):
+        self.use_gpu = use_gpu
+        self.cpus_per_slot = cpus_per_slot
+        self.gpus_per_slot = gpus_per_slot
+        logger.debug(f"Discovery started with {cpus_per_slot} CPU / "
+                     f"{gpus_per_slot} GPU per slot.")
 
-    def _load_checkpoint(self,
-                         checkpoint_to_load: Optional[Union[Dict, str, Path]]
-                         ) -> Optional[Dict]:
-        loaded_checkpoint = super()._load_checkpoint(checkpoint_to_load)
-        if loaded_checkpoint is not None:
-            # If the Tune trial is restarted, a new Trainer is instantiated.
-            # However, we want the checkpoint_id to continue incrementing
-            # from the previous run.
-            self._latest_checkpoint_id = loaded_checkpoint[TUNE_CHECKPOINT_ID]
-        return loaded_checkpoint
+    def find_available_hosts_and_slots(self) -> Dict[str, int]:
+        """Returns a dict mapping <hostname> -> <number of slots>."""
+        alive_nodes = [k for k in ray.nodes() if k["alive"]]
+        host_mapping = {}
+        for node in alive_nodes:
+            hostname = node["NodeManagerAddress"]
+            resources = node["Resources"]
+            slots = resources.get("CPU", 0) // self.cpus_per_slot
+            if self.use_gpu:
+                gpu_slots = resources.get("GPU", 0) // self.gpus_per_slot
+                slots = min(slots, gpu_slots)
+            slots = int(math.ceil(slots))
+            if slots:
+                host_mapping[hostname] = slots
 
-    def write_checkpoint(self, checkpoint: Dict):
-        # Store the checkpoint_id in the file so that the Tune trial can be
-        # resumed after failure or cancellation.
-        checkpoint[TUNE_CHECKPOINT_ID] = self._latest_checkpoint_id
-        # If inside a Tune Trainable, then checkpoint with Tune.
-        with tune.checkpoint_dir(step=self._latest_checkpoint_id) as \
-                checkpoint_dir:
-            path = Path(checkpoint_dir)
-            # Use a standard file name so that we know which file to load
-            # the checkpoint from.
-            file_path = path.joinpath(TUNE_CHECKPOINT_FILE_NAME)
-            with file_path.open("wb") as f:
-                cloudpickle.dump(checkpoint, f)
+        if host_mapping and sum(host_mapping.values()) == 0:
+            logger.info(f"Detected {len(host_mapping)} hosts, but no hosts "
+                        "have available slots.")
+            logger.debug(f"Alive nodes: {alive_nodes}")
+        return host_mapping
 
 
 class TrainingWorkerError(Exception):
     """Raised if a worker fails during training."""
 
 
-class BackendExecutor:
+class ElasticBackendExecutor:
     """Main execution class for training backends.
 
     This class holds a worker group and is responsible for executing the
@@ -231,14 +250,16 @@ class BackendExecutor:
     def __init__(
             self,
             backend_config: BackendConfig,
-            num_workers: int = 1,
+            min_np: int = 1,
+            max_np: Optional[int] = None,
             num_cpus_per_worker: float = 1,
             num_gpus_per_worker: float = 0,
             additional_resources_per_worker: Optional[Dict[str, float]] = None,
             max_retries: int = 3):
         self._backend_config = backend_config
         self._backend = self._backend_config.backend_cls()
-        self._num_workers = num_workers
+        self.min_np = min_np
+        self.max_np = max_np
         self._num_cpus_per_worker = num_cpus_per_worker
         self._num_gpus_per_worker = num_gpus_per_worker
         self._additional_resources_per_worker = additional_resources_per_worker
@@ -248,10 +269,7 @@ class BackendExecutor:
         self._num_failures = 0
         self._initialization_hook = None
 
-        if tune is not None and tune.is_session_enabled():
-            self.checkpoint_manager = TuneCheckpointManager()
-        else:
-            self.checkpoint_manager = CheckpointManager()
+        self.checkpoint_manager = CheckpointManager()
 
         self.worker_group = InactiveWorkerGroup()
         self.dataset_shards = None
@@ -264,8 +282,43 @@ class BackendExecutor:
               train_cls_args: Optional[Tuple] = None,
               train_cls_kwargs: Optional[Dict] = None):
         """Starts the worker group."""
-        self.worker_group = WorkerGroup(
-            num_workers=self._num_workers,
+        self.rendezvous = RendezvousServer(self._backend_config.verbose)
+        discovery = RayHostDiscovery(
+            use_gpu=self._num_gpus_per_worker > 0,
+            cpus_per_slot=self._num_cpus_per_worker,
+            gpus_per_slot=self._num_gpus_per_worker)
+        self.driver = ElasticDriver(
+            rendezvous=self.rendezvous,
+            discovery=discovery,
+            min_np=self.min_np,
+            max_np=self.max_np,
+            timeout=self._backend_config.elastic_timeout,
+            reset_limit=self._backend_config.reset_limit,
+            verbose=self._backend_config.verbose)
+        handler = create_rendezvous_handler(self.driver)
+        logger.debug("[ray] starting rendezvous")
+        global_rendezv_port = self.rendezvous.start(handler)
+
+        logger.debug(f"[ray] waiting for {self.min_np} to start.")
+        self.driver.wait_for_available_slots(self.min_np)
+
+        # Host-to-host common interface detection
+        # requires at least 2 hosts in an elastic job.
+        min_hosts = _get_min_start_hosts(self._backend_config)
+        current_hosts = self.driver.wait_for_available_slots(
+            self.min_np, min_hosts=min_hosts)
+        logger.debug("[ray] getting common interfaces")
+        nics = detect_nics(
+            self._backend_config,
+            all_host_names=current_hosts.host_assignment_order,
+        )
+        logger.debug("[ray] getting driver IP")
+        server_ip = socket.gethostbyname(socket.gethostname())
+        self.run_env_vars = create_run_env_vars(
+            server_ip, nics, global_rendezv_port, elastic=True)
+
+        self.worker_group = DelayedWorkerGroup(
+            num_workers=self.min_np,
             num_cpus_per_worker=self._num_cpus_per_worker,
             num_gpus_per_worker=self._num_gpus_per_worker,
             additional_resources_per_worker=self.
@@ -276,16 +329,15 @@ class BackendExecutor:
         try:
             if initialization_hook:
                 self._initialization_hook = initialization_hook
-                self.worker_group.execute(initialization_hook)
+                # self.worker_group.execute(initialization_hook)
 
-            share_cuda_visible_devices_enabled = bool(
-                env_integer(ENABLE_SHARE_CUDA_VISIBLE_DEVICES_ENV,
-                            self._backend.share_cuda_visible_devices))
+            # share_cuda_visible_devices_enabled = bool(
+            #     env_integer(ENABLE_SHARE_CUDA_VISIBLE_DEVICES_ENV,
+            #                 self._backend.share_cuda_visible_devices))
 
-            if (self._num_gpus_per_worker > 0
-                    and share_cuda_visible_devices_enabled):
+            if (self._num_gpus_per_worker > 0):
                 self._share_cuda_visible_devices()
-            self._backend.on_start(self.worker_group, self._backend_config)
+            # self._backend.on_start(self.worker_group, self._backend_config)
         except RayActorError as exc:
             logger.exception(str(exc))
             self._increment_failures()
@@ -464,26 +516,89 @@ class BackendExecutor:
 
         local_rank_map = self._create_local_rank_map()
 
-        futures = []
-        for index in range(len(self.worker_group)):
-            futures.append(
-                self.worker_group.execute_single_async(
-                    index,
-                    initialize_session,
-                    world_rank=index,
-                    local_rank=local_rank_map[index],
-                    train_func=train_func,
-                    dataset_shard=self.dataset_shards[index],
-                    checkpoint=checkpoint_dict))
+        # futures = []
+        # for index in range(len(self.worker_group)):
+        #     futures.append(
+        #         self.worker_group.execute_single_async(
+        #             index,
+        #             initialize_session,
+        #             world_rank=index,
+        #             local_rank=local_rank_map[index],
+        #             train_func=train_func,
+        #             dataset_shard=self.dataset_shards[index],
+        #             checkpoint=checkpoint_dict))
 
-        self.get_with_failure_handling(futures)
-
+        # self.get_with_failure_handling(futures)
+        # create slot-id --> workers map
+        # Find the correct worker and pipe its events to the session
         # Run the training function asynchronously in its own thread.
-        def train_async():
+
+        # pass train_async as the worker loop
+        # it should run till the thread joins
+        # Event killer check:
+        # train_async should have a second thread that periodically check on the events.
+        # get own event like this(for failures):
+        # shutdown_event = self._shutdown(driver failure)
+        # host_event = self._host_manager.get_host_event(slot_info.hostname)(this worker failed)
+        # it should return the result
+        # Invoke with elastic_driver: worker_group[hostname].execute (not async)
+        # get the exit code and return to this
+        # What if this gets invoked on a new worker?
+        # we need to initialize session and run training on that new worker
+        # that worker must be added to the workergroup
+        # Later, dataset partitioning can also be done in the workergroup
+        # no need for anything special in the reset callback yet
+
+
+        def check_and_kill(events, worker, rank):
+            for e in events:
+                if e.is_set():
+                    self.worker_group.remove_workers([rank])
+                    ray.kill(worker)
+                    return True
+                e.wait(0.1)
+
+        def train_async(events, worker, rank):
             session = get_session()
             session.start()
+            hvd_event_thread = PropagatingThread(target=check_and_kill, args=[events, worker, rank],
+                daemon=True)
+            hvd_event_thread.start()
 
-        self.worker_group.execute_async(train_async)
+        def launch_worker(slot_info, events):
+            """This function will be invoked by the horovod elastic driver when a worker is added or removed.
+               Therefore it needs to perform all the necessary initialization of a worker
+               And add the worker to the worker_group
+               In addition, it needs to listen for worker or driver termination events.
+            """
+            worker_env_vars = {}
+            worker_env_vars.update(self.run_env_vars.copy())
+            worker_env_vars.update({"PYTHONUNBUFFERED": "1"})
+            worker = self.worker_group.add_worker(slot_info)
+            worker.update_env_vars.remote(worker_env_vars)
+            worker.update_env_vars.remote(create_slot_env_vars(slot_info))
+            if self.use_gpu:
+                visible_devices = ",".join(
+                    [str(i) for i in range(slot_info.local_size)])
+                worker.update_env_vars.remote({
+                    "CUDA_VISIBLE_DEVICES":
+                    visible_devices
+                })
+            # initialize session
+            self.get_with_failure_handling(
+                worker.actor._BaseWorkerMixin__execute.remote(
+                    initialize_session,
+                    world_rank=slot_info.rank,
+                    local_rank=local_rank_map[slot_info.rank],
+                    train_func=train_func,
+                    dataset_shard=dataset,
+                    checkpoint=checkpoint_dict))
+            # train in a separate thread
+            worker.actor._BaseWorkerMixin__execute.remote(train_async, events, worker, slot_info.rank)
+
+
+
+        self.driver.start(self.min_np, launch_worker)
 
     def _get_next_results(self) -> Optional[List[TrainingResult]]:
         """Fetches the next ``TrainingResult`` from each worker.
@@ -641,6 +756,7 @@ class BackendExecutor:
 
         futures = self.worker_group.execute_async(end_training)
         results = self.get_with_failure_handling(futures)
+        self.driver.stop()
         return results
 
     def get_with_failure_handling(self, remote_values):

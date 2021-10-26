@@ -48,6 +48,7 @@ class HorovodConfig(BackendConfig):
     ssh_str: Optional[str] = None
     timeout_s: int = 300
     placement_group_timeout_s: int = 100
+    elastic_timeout: int = 600
 
     @property
     def start_timeout(self):

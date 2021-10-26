@@ -9,6 +9,7 @@ from typing import Union, Callable, List, TypeVar, Optional, Any, Dict, \
 from ray.actor import ActorHandle
 from ray.train.backends.backend import BackendConfig, BackendExecutor, \
     InactiveWorkerGroupError, TrainBackendError, TrainingWorkerError
+from ray.train.backends.elastic_backend import ElasticBackendExecutor
 from ray.train.backends.horovod import HorovodConfig
 from ray.train.backends.tensorflow import TensorflowConfig
 from ray.train.backends.torch import TorchConfig
@@ -85,7 +86,9 @@ class Trainer:
     def __init__(
             self,
             backend: Union[str, BackendConfig],
-            num_workers: int,
+            num_workers: Optional[int] = None,
+            min_np: Optional[int] = None,
+            max_np: Optional[int] = None,
             use_gpu: bool = False,
             resources_per_worker: Optional[Dict[str, float]] = None,
             logdir: Optional[str] = None,
@@ -123,14 +126,23 @@ class Trainer:
                     "`resources_per_worker`. Either set `use_gpu` to False or "
                     "request a positive number of `GPU` in "
                     "`resources_per_worker.")
-
-        self._executor = BackendExecutor(
-            backend_config=backend_config,
-            num_workers=num_workers,
-            num_cpus_per_worker=num_cpus,
-            num_gpus_per_worker=num_gpus,
-            additional_resources_per_worker=resources_per_worker,
-            max_retries=max_retries)
+        if backend_config.elastic:
+            self._executor = ElasticBackendExecutor(
+                backend_config=backend_config,
+                min_np=min_np,
+                max_np=max_np,
+                num_cpus_per_worker=num_cpus,
+                num_gpus_per_worker=num_gpus,
+                additional_resources_per_worker=resources_per_worker,
+                max_retries=max_retries)
+        else:
+            self._executor = BackendExecutor(
+                backend_config=backend_config,
+                num_workers=num_workers,
+                num_cpus_per_worker=num_cpus,
+                num_gpus_per_worker=num_gpus,
+                additional_resources_per_worker=resources_per_worker,
+                max_retries=max_retries)
 
     def create_logdir(self, log_dir: Optional[Union[str, Path]]) -> Path:
         """Create logdir for the Trainer."""
