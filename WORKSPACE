@@ -57,17 +57,17 @@ load("@rules_python//python/pip_install:repositories.bzl", "pip_install_dependen
 
 pip_install_dependencies()
 
-load("@rules_python//python:pip.bzl", "pip_parse")
+# load("@rules_python//python:pip.bzl", "pip_parse")
 
-pip_parse(
-    name = "py_deps_buildkite",
-    python_interpreter_target = python39,
-    requirements_lock = "//release:requirements_buildkite.txt",
-)
+# pip_parse(
+#     name = "py_deps_buildkite",
+#     python_interpreter_target = python39,
+#     requirements_lock = "//release:requirements_buildkite.txt",
+# )
 
-load("@py_deps_buildkite//:requirements.bzl", install_py_deps_buildkite = "install_deps")
+# load("@py_deps_buildkite//:requirements.bzl", install_py_deps_buildkite = "install_deps")
 
-install_py_deps_buildkite()
+# install_py_deps_buildkite()
 
 register_toolchains("//:python_toolchain")
 
