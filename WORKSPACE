@@ -3,6 +3,26 @@ workspace(name = "com_github_ray_project_ray")
 load("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
 
 http_archive(
+    name = "build_bazel_rules_apple",
+    sha256 = "b892911288715b354e05b9a6fe9009635f7155991f24f27e779fe80d435c92bc",
+    url = "https://github.com/bazelbuild/rules_apple/releases/download/3.13.0/rules_apple.3.13.0.tar.gz",
+)
+
+load(
+    "@build_bazel_rules_apple//apple:repositories.bzl",
+    "apple_rules_dependencies",
+)
+
+apple_rules_dependencies()
+
+load(
+    "@build_bazel_apple_support//lib:repositories.bzl",
+    "apple_support_dependencies",
+)
+
+apple_support_dependencies()
+
+http_archive(
     name = "platforms",
     sha256 = "5eda539c841265031c2f82d8ae7a3a6490bd62176e0c038fc469eabf91f6149b",
     urls = [
@@ -29,7 +49,7 @@ load("@bazel_skylib//lib:versions.bzl", "versions")
 
 # Please keep this in sync with the .bazelversion file.
 versions.check(
-    maximum_bazel_version = "6.5.0",
+    maximum_bazel_version = "7.3.0",
     minimum_bazel_version = "6.5.0",
 )
 

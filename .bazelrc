@@ -18,6 +18,7 @@ build --compilation_mode=opt
 # Using C++ 17 on all platforms.
 build:linux --host_cxxopt="-std=c++17"
 build:macos --host_cxxopt="-std=c++17"
+build:macos --macos_cpus=arm64e
 build:clang-cl --host_cxxopt="-std=c++17"
 build:msvc-cl --host_cxxopt="/std:c++17"
 build:windows --host_cxxopt="/std:c++17"
@@ -29,6 +30,12 @@ build:windows --cxxopt="/std:c++17"
 # This workaround is needed to prevent Bazel from compiling the same file twice (once PIC and once not).
 build:linux --copt="-fPIC"
 build:macos --copt="-fPIC"
+build:macos --linkopt="-arch"
+build:macos --linkopt="arm64e"
+build:macos --copt="-arch"
+build:macos --copt="arm64e"
+build:macos --copt="-target"
+build:macos --copt="arm64e-apple-ios18.4"
 build:clang-cl --compiler=clang-cl
 build:msvc-cl --compiler=msvc-cl
 # `LC_ALL` and `LANG` is needed for cpp worker tests, because they will call "ray start".

@@ -35,6 +35,7 @@ ROOT_DIR = os.path.dirname(__file__)
 BUILD_JAVA = os.getenv("RAY_INSTALL_JAVA") == "1"
 SKIP_BAZEL_BUILD = os.getenv("SKIP_BAZEL_BUILD") == "1"
 BAZEL_ARGS = os.getenv("BAZEL_ARGS")
+print(f"BAZEL_ARGS: {BAZEL_ARGS}")
 BAZEL_LIMIT_CPUS = os.getenv("BAZEL_LIMIT_CPUS")
 
 THIRDPARTY_SUBDIR = os.path.join("ray", "thirdparty_files")
