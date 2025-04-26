@@ -2,11 +2,34 @@ workspace(name = "com_github_ray_project_ray")
 
 load("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
 
+
 http_archive(
-    name = "build_bazel_rules_apple",
-    sha256 = "b892911288715b354e05b9a6fe9009635f7155991f24f27e779fe80d435c92bc",
-    url = "https://github.com/bazelbuild/rules_apple/releases/download/3.13.0/rules_apple.3.13.0.tar.gz",
+    name = "platforms",
+    urls = [
+        "https://mirror.bazel.build/github.com/bazelbuild/platforms/releases/download/0.0.11/platforms-0.0.11.tar.gz",
+        "https://github.com/bazelbuild/platforms/releases/download/0.0.11/platforms-0.0.11.tar.gz",
+    ],
+    sha256 = "29742e87275809b5e598dc2f04d86960cc7a55b3067d97221c9abbc9926bff0f",
 )
+http_archive(
+    name = "build_bazel_rules_ios",
+    sha256 = "e0dbd18f1d7a48a4b98e97dbdc45dfc7f0b1cf902afe86c442614db17f560611",
+    url = "https://github.com/bazel-ios/rules_ios/releases/download/5.6.0/rules_ios.5.6.0.tar.gz",
+    )
+load("//bazel:ray_deps_setup.bzl", "ray_deps_setup")
+
+ray_deps_setup()
+
+load("//bazel:ray_deps_build_all.bzl", "ray_deps_build_all")
+
+ray_deps_build_all()
+
+load(
+    "@build_bazel_rules_ios//rules:repositories.bzl",
+    "rules_ios_dependencies"
+)
+
+rules_ios_dependencies()
 
 load(
     "@build_bazel_rules_apple//apple:repositories.bzl",
@@ -16,27 +39,25 @@ load(
 apple_rules_dependencies()
 
 load(
+    "@build_bazel_rules_swift//swift:repositories.bzl",
+    "swift_rules_dependencies",
+)
+
+swift_rules_dependencies()
+
+load(
     "@build_bazel_apple_support//lib:repositories.bzl",
     "apple_support_dependencies",
 )
 
 apple_support_dependencies()
 
-http_archive(
-    name = "platforms",
-    sha256 = "5eda539c841265031c2f82d8ae7a3a6490bd62176e0c038fc469eabf91f6149b",
-    urls = [
-        "https://github.com/bazelbuild/platforms/releases/download/0.0.9/platforms-0.0.9.tar.gz",
-    ],
+load(
+    "@com_google_protobuf//:protobuf_deps.bzl",
+    "protobuf_deps",
 )
 
-load("//bazel:ray_deps_setup.bzl", "ray_deps_setup")
-
-ray_deps_setup()
-
-load("//bazel:ray_deps_build_all.bzl", "ray_deps_build_all")
-
-ray_deps_build_all()
+protobuf_deps()
 
 # This needs to be run after grpc_deps() in ray_deps_build_all() to make
 # sure all the packages loaded by grpc_deps() are available. However a
@@ -49,7 +70,7 @@ load("@bazel_skylib//lib:versions.bzl", "versions")
 
 # Please keep this in sync with the .bazelversion file.
 versions.check(
-    maximum_bazel_version = "7.3.0",
+    maximum_bazel_version = "7.6.1",
     minimum_bazel_version = "6.5.0",
 )
 

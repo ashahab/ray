@@ -91,15 +91,14 @@ def ray_deps_setup():
     # Pinned grpc version: v23.4
     http_archive(
         name = "com_google_protobuf",
-        sha256 = "76a33e2136f23971ce46c72fd697cd94dc9f73d56ab23b753c3e16854c90ddfd",
-        strip_prefix = "protobuf-2c5fa078d8e86e5f4bd34e6f4c9ea9e8d7d4d44a",
+        strip_prefix = "protobuf-fff909ea5104ca2104898516511ee03ee4505078",
         urls = [
-            "https://github.com/protocolbuffers/protobuf/archive/2c5fa078d8e86e5f4bd34e6f4c9ea9e8d7d4d44a.tar.gz",
+            "https://github.com/protocolbuffers/protobuf/archive/fff909ea5104ca2104898516511ee03ee4505078.tar.gz",
         ],
-        patches = [
-            "@com_github_grpc_grpc//third_party:protobuf.patch",
-        ],
-        patch_args = ["-p1"],
+        # patches = [
+        #    "@com_github_grpc_grpc//third_party:protobuf.patch",
+        # ],
+        # patch_args = ["-p1"],
     )
 
     # NOTE(lingxuan.zlx): 3rd party dependencies could be accessed, so it suggests
@@ -314,11 +313,16 @@ def ray_deps_setup():
     # So the version here effectively determines the lower bound of python/java
     # protobuf library that Ray supports.
     http_archive(
-        name = "com_google_protobuf_rules_proto_grpc",
-        strip_prefix = "protobuf-3.19.4",
-        urls = ["https://github.com/protocolbuffers/protobuf/archive/v3.19.4.tar.gz"],
-        sha256 = "3bd7828aa5af4b13b99c191e8b1e884ebfa9ad371b0ce264605d347f135d2568",
+        name = "com_google_protobuf",
+        strip_prefix = "protobuf-fff909ea5104ca2104898516511ee03ee4505078",
+        urls = [
+            "https://github.com/protocolbuffers/protobuf/archive/fff909ea5104ca2104898516511ee03ee4505078.tar.gz",
+        ],
     )
+
+
+
+
     auto_http_archive(
         name = "rules_proto_grpc",
         url = "https://github.com/rules-proto-grpc/rules_proto_grpc/archive/a74fef39c5fe636580083545f76d1eab74f6450d.tar.gz",
