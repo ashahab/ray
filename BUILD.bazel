@@ -60,6 +60,15 @@ platform(
 
 # C/C++ toolchain constraint configs.
 
+platform(
+    name = "ios",
+    constraint_values = [
+        "@platforms//os:ios",
+        "@platforms//cpu:arm",
+        "@platforms//cpu:arm64e"
+    ],
+)
+
 config_setting(
     name = "msvc-cl",
     flag_values = {"@bazel_tools//tools/cpp:compiler": "msvc-cl"},
@@ -968,7 +977,7 @@ pyx_library(
         copts = COPTS + PYX_COPTS,
         # see https://github.com/tensorflow/tensorflow/blob/r2.1/tensorflow/lite/BUILD#L444
         linkopts = select({
-            "@platforms//os:osx": [
+            "@platforms//os:ios": [
                 "-Wl,-exported_symbols_list,$(location //:src/ray/ray_exported_symbols.lds)",
             ],
             "@platforms//os:windows": [],

@@ -91,14 +91,15 @@ def ray_deps_setup():
     # Pinned grpc version: v23.4
     http_archive(
         name = "com_google_protobuf",
-        strip_prefix = "protobuf-fff909ea5104ca2104898516511ee03ee4505078",
+        sha256 = "76a33e2136f23971ce46c72fd697cd94dc9f73d56ab23b753c3e16854c90ddfd",
+        strip_prefix = "protobuf-2c5fa078d8e86e5f4bd34e6f4c9ea9e8d7d4d44a",
         urls = [
-            "https://github.com/protocolbuffers/protobuf/archive/fff909ea5104ca2104898516511ee03ee4505078.tar.gz",
+            "https://github.com/protocolbuffers/protobuf/archive/2c5fa078d8e86e5f4bd34e6f4c9ea9e8d7d4d44a.tar.gz",
         ],
-        # patches = [
-        #    "@com_github_grpc_grpc//third_party:protobuf.patch",
-        # ],
-        # patch_args = ["-p1"],
+        patches = [
+            "@com_github_grpc_grpc//third_party:protobuf.patch",
+        ],
+        patch_args = ["-p1"],
     )
 
     # NOTE(lingxuan.zlx): 3rd party dependencies could be accessed, so it suggests
@@ -252,11 +253,12 @@ def ray_deps_setup():
     auto_http_archive(
         name = "com_github_grpc_grpc",
         # NOTE: If you update this, also update @boringssl's hash.
-        url = "https://github.com/grpc/grpc/archive/refs/tags/v1.69.0.tar.gz",
-        # sha256 = "0762f809b9de845e6a7c809cabccad6aa4143479fd43b396611fe5a086c0aeeb",
+        url = "https://github.com/grpc/grpc/archive/refs/tags/v1.57.1.tar.gz",
+        sha256 = "0762f809b9de845e6a7c809cabccad6aa4143479fd43b396611fe5a086c0aeeb",
         patches = [
-           "@com_github_ray_project_ray//thirdparty/patches:grpc-cython-copts.patch"
-           # "@com_github_ray_project_ray//thirdparty/patches:grpc-zlib-fdopen.patch",
+            "@com_github_ray_project_ray//thirdparty/patches:grpc-cython-copts.patch",
+            "@com_github_ray_project_ray//thirdparty/patches:grpc-zlib-fdopen.patch",
+            "@com_github_ray_project_ray//thirdparty/patches:grpc-cc-library.patch",
         ],
     )
 
@@ -313,11 +315,10 @@ def ray_deps_setup():
     # So the version here effectively determines the lower bound of python/java
     # protobuf library that Ray supports.
     http_archive(
-        name = "com_google_protobuf",
-        strip_prefix = "protobuf-fff909ea5104ca2104898516511ee03ee4505078",
-        urls = [
-            "https://github.com/protocolbuffers/protobuf/archive/fff909ea5104ca2104898516511ee03ee4505078.tar.gz",
-        ],
+        name = "com_google_protobuf_rules_proto_grpc",
+        strip_prefix = "protobuf-3.19.4",
+        urls = ["https://github.com/protocolbuffers/protobuf/archive/v3.19.4.tar.gz"],
+        sha256 = "3bd7828aa5af4b13b99c191e8b1e884ebfa9ad371b0ce264605d347f135d2568",
     )
 
 

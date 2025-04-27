@@ -5,22 +5,21 @@ load("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
 
 http_archive(
     name = "platforms",
+    sha256 = "5eda539c841265031c2f82d8ae7a3a6490bd62176e0c038fc469eabf91f6149b",
     urls = [
-        "https://mirror.bazel.build/github.com/bazelbuild/platforms/releases/download/0.0.11/platforms-0.0.11.tar.gz",
-        "https://github.com/bazelbuild/platforms/releases/download/0.0.11/platforms-0.0.11.tar.gz",
-    ],
-    sha256 = "29742e87275809b5e598dc2f04d86960cc7a55b3067d97221c9abbc9926bff0f",
+        "https://github.com/bazelbuild/platforms/releases/download/0.0.9/platforms-0.0.9.tar.gz",
+    ]
+    # sha256 = "29742e87275809b5e598dc2f04d86960cc7a55b3067d97221c9abbc9926bff0f",
 )
 http_archive(
     name = "build_bazel_rules_ios",
-    sha256 = "e0dbd18f1d7a48a4b98e97dbdc45dfc7f0b1cf902afe86c442614db17f560611",
-    url = "https://github.com/bazel-ios/rules_ios/releases/download/5.6.0/rules_ios.5.6.0.tar.gz",
-    )
+    sha256 = "c5e6917c604a91f816bd5a23277f0bd31988bb93cead2e1d9e03c17d2dec4fbe",
+    url = "https://github.com/bazel-ios/rules_ios/releases/download/5.3.0/rules_ios.5.3.0.tar.gz",
+)
 
-http_archive(
-    name = "build_bazel_rules_apple",
-    sha256 = "73ad768dfe824c736d0a8a81521867b1fb7a822acda2ed265897c03de6ae6767",
-    url = "https://github.com/bazelbuild/rules_apple/releases/download/3.20.1/rules_apple.3.20.1.tar.gz",
+load(
+    "@build_bazel_rules_ios//rules:repositories.bzl",
+    "rules_ios_dependencies"
 )
 
 load("//bazel:ray_deps_setup.bzl", "ray_deps_setup")
