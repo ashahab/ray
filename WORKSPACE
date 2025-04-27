@@ -16,13 +16,17 @@ http_archive(
     sha256 = "e0dbd18f1d7a48a4b98e97dbdc45dfc7f0b1cf902afe86c442614db17f560611",
     url = "https://github.com/bazel-ios/rules_ios/releases/download/5.6.0/rules_ios.5.6.0.tar.gz",
     )
+
+http_archive(
+    name = "build_bazel_rules_apple",
+    sha256 = "73ad768dfe824c736d0a8a81521867b1fb7a822acda2ed265897c03de6ae6767",
+    url = "https://github.com/bazelbuild/rules_apple/releases/download/3.20.1/rules_apple.3.20.1.tar.gz",
+)
+
 load("//bazel:ray_deps_setup.bzl", "ray_deps_setup")
 
 ray_deps_setup()
 
-load("//bazel:ray_deps_build_all.bzl", "ray_deps_build_all")
-
-ray_deps_build_all()
 
 load(
     "@build_bazel_rules_ios//rules:repositories.bzl",
@@ -58,6 +62,10 @@ load(
 )
 
 protobuf_deps()
+
+load("//bazel:ray_deps_build_all.bzl", "ray_deps_build_all")
+
+ray_deps_build_all()
 
 # This needs to be run after grpc_deps() in ray_deps_build_all() to make
 # sure all the packages loaded by grpc_deps() are available. However a
