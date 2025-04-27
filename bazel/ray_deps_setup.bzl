@@ -254,10 +254,10 @@ def ray_deps_setup():
         # NOTE: If you update this, also update @boringssl's hash.
         url = "https://github.com/grpc/grpc/archive/refs/tags/v1.69.0.tar.gz",
         # sha256 = "0762f809b9de845e6a7c809cabccad6aa4143479fd43b396611fe5a086c0aeeb",
-        # patches = [
-        #    "@com_github_ray_project_ray//thirdparty/patches:grpc-cython-copts.patch",
-        #    "@com_github_ray_project_ray//thirdparty/patches:grpc-zlib-fdopen.patch",
-        #],
+        patches = [
+           "@com_github_ray_project_ray//thirdparty/patches:grpc-cython-copts.patch"
+           # "@com_github_ray_project_ray//thirdparty/patches:grpc-zlib-fdopen.patch",
+        ],
     )
 
     http_archive(
