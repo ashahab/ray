@@ -26,8 +26,8 @@ if __name__ == "__main__":
     sdk_root = get_result(["xcrun", "--sdk", sdk, "--show-sdk-path"], build_env)
     build_env["SDKROOT"] = sdk_root
     # build_env["BAZEL_ARGS"] = "--toolchain_resolution_debug --target_platform_fallback=//:iPhone18 --platforms=//:iPhone18 --host_platform=//:iPhone18 --extra_execution_platforms=//:iPhone18"
-    build_env["BAZEL_ARGS"] = "--toolchain_resolution_debug=@bazel_tools//tools/cpp:toolchain_type -s --sandbox_debug --ios_sdk_version=18.4 --apple_platform_type=ios --ios_multi_cpus=arm64e "
-    build_env["BAZEL_ARGS"] += "--platforms=//:ios --target_platform_fallback=//:ios --host_platform=//:ios --extra_execution_platforms=//:ios "
+    build_env["BAZEL_ARGS"] = "--toolchain_resolution_debug=@bazel_tools//tools/cpp:toolchain_type -s --sandbox_debug --ios_sdk_version=18.4internal --apple_platform_type=ios --ios_multi_cpus=arm64e --platforms=//:ios"
+    # build_env["BAZEL_ARGS"] += "--platforms=//:ios --target_platform_fallback=//:ios --host_platform=//:ios --extra_execution_platforms=//:ios "
     build_env["ARCHS"] = "arm64e"
 
     # use correct python executable
