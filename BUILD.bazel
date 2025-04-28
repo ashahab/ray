@@ -64,7 +64,6 @@ platform(
     name = "ios",
     constraint_values = [
         "@platforms//os:ios",
-        "@platforms//cpu:arm",
         "@platforms//cpu:arm64e"
     ],
 )
