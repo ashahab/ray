@@ -172,6 +172,10 @@ def ray_deps_setup():
         # If you update the Boost version, remember to update the 'boost' rule.
         url = "https://github.com/nelhage/rules_boost/archive/57c99395e15720e287471d79178d36a85b64d6f6.tar.gz",
         sha256 = "490d11425393eed068966a4990ead1ff07c658f823fd982fddac67006ccc44ab",
+        patches = [
+            "@com_github_ray_project_ray//thirdparty/patches:boost.patch",
+            "@com_github_ray_project_ray//thirdparty/patches:lzma.patch",
+        ]
     )
 
     http_archive(

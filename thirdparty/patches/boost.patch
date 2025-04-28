@@ -1,0 +1,16 @@
+diff --git BUILD.boost BUILD.boost
+index 1c8d785..089f253 100644
+--- BUILD.boost
++++ BUILD.boost
+@@ -128,6 +128,11 @@ BOOST_CTX_ASM_SOURCES = selects.with_or({
+ filegroup(
+     name = "apple_ctx_asm_sources",
+     srcs = select({
++        "@platforms//cpu:arm64e": [
++            "libs/context/src/asm/jump_arm64_aapcs_macho_gas.S",
++            "libs/context/src/asm/make_arm64_aapcs_macho_gas.S",
++            "libs/context/src/asm/ontop_arm64_aapcs_macho_gas.S",
++        ],
+         "@platforms//cpu:aarch64": [
+             "libs/context/src/asm/jump_arm64_aapcs_macho_gas.S",
+             "libs/context/src/asm/make_arm64_aapcs_macho_gas.S",
