@@ -91,15 +91,10 @@ def ray_deps_setup():
     # Pinned grpc version: v23.4
     http_archive(
         name = "com_google_protobuf",
-        sha256 = "76a33e2136f23971ce46c72fd697cd94dc9f73d56ab23b753c3e16854c90ddfd",
-        strip_prefix = "protobuf-2c5fa078d8e86e5f4bd34e6f4c9ea9e8d7d4d44a",
+        strip_prefix = "protobuf-6b5d8db01fe47478e8d400f550e797e6230d464e",
         urls = [
-            "https://github.com/protocolbuffers/protobuf/archive/2c5fa078d8e86e5f4bd34e6f4c9ea9e8d7d4d44a.tar.gz",
+            "https://github.com/protocolbuffers/protobuf/archive/6b5d8db01fe47478e8d400f550e797e6230d464e.tar.gz",
         ],
-        patches = [
-            "@com_github_grpc_grpc//third_party:protobuf.patch",
-        ],
-        patch_args = ["-p1"],
     )
 
     # NOTE(lingxuan.zlx): 3rd party dependencies could be accessed, so it suggests
