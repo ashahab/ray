@@ -655,10 +655,11 @@ def build(build_python, build_java, build_cpp):
         bazel_flags.append("--config=asan-build")
     if setup_spec.build_type == BuildType.TSAN:
         bazel_flags.append("--config=tsan")
-
+    launch_cmd = bazel_precmd_flags + ["build"] + bazel_flags + ["--"] + bazel_targets
+    print(f"launch_cmd: {launch_cmd}")
     return bazel_invoke(
         subprocess.check_call,
-        bazel_precmd_flags + ["build"] + bazel_flags + ["--"] + bazel_targets,
+        launch_cmd,
         env=bazel_env,
     )
 
