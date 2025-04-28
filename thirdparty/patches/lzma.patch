@@ -1,0 +1,12 @@
+diff --git BUILD.lzma BUILD.lzma
+index 7e7b8a0..ed258fd 100644
+--- BUILD.lzma
++++ BUILD.lzma
+@@ -40,6 +40,7 @@ copy_file(
+ alias(
+     name = "apple_config",
+     actual = select({
++        "@platforms//cpu:arm64e": "@com_github_nelhage_rules_boost//:config.lzma-ios-arm64.h",
+         "@platforms//cpu:arm64": "@com_github_nelhage_rules_boost//:config.lzma-ios-arm64.h",
+         "@platforms//cpu:armv7": "@com_github_nelhage_rules_boost//:config.lzma-ios-armv7.h",
+         "@platforms//cpu:x86_64": "@com_github_nelhage_rules_boost//:config.lzma-osx-x86_64.h",  # Configuration same as macOS
