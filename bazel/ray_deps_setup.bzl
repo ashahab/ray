@@ -124,13 +124,13 @@ def ray_deps_setup():
     auto_http_archive(
         name = "com_github_spdlog",
         build_file = "@com_github_ray_project_ray//bazel:spdlog.BUILD",
-        urls = ["https://github.com/gabime/spdlog/archive/v1.12.0.zip"],
-        sha256 = "6174bf8885287422a6c6a0312eb8a30e8d22bcfcee7c48a6d02d1835d7769232",
+        urls = ["https://github.com/gabime/spdlog/archive/v1.15.2.zip"],
+        # sha256 = "6174bf8885287422a6c6a0312eb8a30e8d22bcfcee7c48a6d02d1835d7769232",
         # spdlog rotation filename format conflict with ray, update the format.
-        patches = [
-            "@com_github_ray_project_ray//thirdparty/patches:spdlog-rotation-file-format.patch",
-        ],
-        patch_args = ["-p1"],
+        # patches = [
+        #     "@com_github_ray_project_ray//thirdparty/patches:spdlog-rotation-file-format.patch",
+        # ],
+        # patch_args = ["-p1"],
     )
 
     auto_http_archive(
