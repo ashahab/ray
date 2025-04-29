@@ -20,7 +20,7 @@ build:linux --host_cxxopt="-std=c++17"
 build:ios --host_cxxopt="-std=c++17"
 build:ios --macos_cpus=arm64e
 build:macos --host_cxxopt="-std=c++17"
-build:macos --macos_cpus=arm64e
+# build:macos --macos_cpus=arm64e
 build:clang-cl --host_cxxopt="-std=c++17"
 build:msvc-cl --host_cxxopt="/std:c++17"
 build:windows --host_cxxopt="/std:c++17"
