@@ -4,6 +4,7 @@ load("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
 
 
 load("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
+
 http_archive(
     name = "platforms",
     urls = [
@@ -12,6 +13,21 @@ http_archive(
     ],
     sha256 = "29742e87275809b5e598dc2f04d86960cc7a55b3067d97221c9abbc9926bff0f",
 )
+
+
+
+zlib_version = "1.3.1"
+
+zlib_sha256 = "9a93b2b7dfdac77ceba5a558a580e74667dd6fede4585b91eefb60f03b72df23"
+
+http_archive(
+    name = "zlib",
+    build_file = "@com_google_protobuf//:third_party/zlib.BUILD",
+    sha256 = zlib_sha256,
+    strip_prefix = "zlib-%s" % zlib_version,
+    urls = ["https://github.com/madler/zlib/releases/download/v{v}/zlib-{v}.tar.gz".format(v = zlib_version)],
+)
+
 http_archive(
     name = "build_bazel_rules_ios",
     sha256 = "e0dbd18f1d7a48a4b98e97dbdc45dfc7f0b1cf902afe86c442614db17f560611",
@@ -62,6 +78,7 @@ load(
 )
 
 protobuf_deps()
+
 
 load("//bazel:ray_deps_build_all.bzl", "ray_deps_build_all")
 
