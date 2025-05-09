@@ -942,14 +942,41 @@ ray_cc_library(
     ],
 )
 
+#alias(
+#    name = "hiredis",
+#    actual = "@com_github_redis_hiredis//:hiredis",
+#)
+
+ray_cc_library(
+    name = "hiredis",
+    srcs = glob(
+        [
+            "src/hiredis/*.c",
+            "src/hiredis/*.h",
+        ],
+        exclude =
+        [
+            "src/hiredis/test.c",
+        ],
+        allow_empty = True,
+    ),
+    hdrs = glob([
+        "src/hiredis/dict.c",
+        "src/hiredis/*.h",
+        "src/hiredis/adapters/*.h",
+    ],
+    allow_empty = True
+    ),
+    copts = ["-DUSE_SSL=1", "-Wno-unused-function"],
+    deps = [
+        "@boringssl//:ssl",
+        "@boringssl//:crypto"
+    ],
+)
+
 ray_cc_library(
     name = "dlmalloc",
     hdrs = ["src/ray/thirdparty/dlmalloc.c"],
-)
-
-alias(
-    name = "hiredis",
-    actual = "@com_github_redis_hiredis//:hiredis",
 )
 
 
