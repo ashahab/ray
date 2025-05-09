@@ -39,15 +39,15 @@ build:macos --copt="-fPIC"
 # build:ios --linkopt="18.4"
 # build:ios --linkopt="16.3"
 
-common --experimental_platform_in_output_dir
+common --experimental_platform_in_output_dir --enable_bzlmod
 # build:ios --linkopt="-arch"
 # build:ios --linkopt="arm64e"
 # build:ios --copt="-arch"
 # build:ios --copt="arm64e"
-build:ios --copt="-miphoneos-version-min=18.4"
-build:ios --linkopt="-miphoneos-version-min=18.4"
-build:macos --copt="-miphoneos-version-min=18.4"
-build:macos --linkopt="-miphoneos-version-min=18.4"
+build:ios --copt="-miphoneos-version-min=19.0"
+build:ios --linkopt="-miphoneos-version-min=19.0"
+build:macos --copt="-miphoneos-version-min=19.0"
+build:macos --linkopt="-miphoneos-version-min=19.0"
 build:clang-cl --compiler=clang-cl
 build:msvc-cl --compiler=msvc-cl
 # `LC_ALL` and `LANG` is needed for cpp worker tests, because they will call "ray start".

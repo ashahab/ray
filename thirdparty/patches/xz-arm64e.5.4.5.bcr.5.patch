@@ -1,0 +1,13 @@
+diff --git BUILD.bazel BUILD.bazel
+index 7e7b8a0..ed258fd 100644
+--- BUILD.bazel
++++ BUILD.bazel
+@@ -104,6 +104,7 @@ copy_file(
+ alias(
+     name = "apple_config",
+     actual = select({
++        "@platforms//cpu:arm64e": "config.lzma-ios-arm64.h",
+         "@platforms//cpu:arm64": "config.lzma-ios-arm64.h",
+         "@platforms//cpu:armv7": "config.lzma-ios-armv7.h",
+         "@platforms//cpu:x86_64": "config.lzma-osx-x86_64.h",  # Configuration same as macOS
+         "@platforms//cpu:x86_32": "config.lzma-ios-i386.h",

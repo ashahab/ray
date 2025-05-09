@@ -24,16 +24,6 @@ LOPTS = select({
     ],
 })
 
-# This library is for internal hiredis use, because hiredis assumes a
-# different include prefix for itself than external libraries do.
-cc_library(
-    name = "_hiredis",
-    hdrs = [
-        "dict.c",
-    ],
-    copts = COPTS,
-)
-
 cc_library(
     name = "hiredis",
     srcs = glob(
@@ -45,11 +35,14 @@ cc_library(
         [
             "test.c",
         ],
+        allow_empty = True,
     ),
     hdrs = glob([
         "*.h",
         "adapters/*.h",
-    ]),
+    ],
+    allow_empty = True
+    ),
     includes = [
         ".",
     ],
@@ -57,7 +50,6 @@ cc_library(
     linkopts = LOPTS,
     include_prefix = "hiredis",
     deps = [
-        ":_hiredis",
         "@boringssl//:ssl",
         "@boringssl//:crypto"
     ],

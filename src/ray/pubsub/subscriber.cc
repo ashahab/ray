@@ -149,7 +149,7 @@ void SubscriberChannel::HandlePublishedMessage(const rpc::Address &publisher_add
       [subscription_callback = std::move(maybe_subscription_callback.value()),
        msg = std::move(pub_message)]() mutable  // allow data to be moved
       { subscription_callback(std::move(msg)); },
-      "Subscriber.HandlePublishedMessage_" + channel_name);
+      "Subscriber.HandlePublishedMessage_" + std::string(channel_name));
 }
 
 void SubscriberChannel::HandlePublisherFailure(const rpc::Address &publisher_address,
@@ -209,7 +209,7 @@ bool SubscriberChannel::HandlePublisherFailureInternal(
         [failure_callback = std::move(maybe_failure_callback.value()), key_id, status]() {
           failure_callback(key_id, status);
         },
-        "Subscriber.HandleFailureCallback_" + channel_name);
+        "Subscriber.HandleFailureCallback_" + std::string(channel_name));
     return true;
   }
   return false;

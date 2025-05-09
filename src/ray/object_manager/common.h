@@ -27,11 +27,13 @@
 
 // On Darwin, named semaphores cannot have names longer than PSEMNAMLEN. On other
 // platforms, we define PSEMNAMLEN to be 30, which is what seems to work in Darwin.
-#ifdef __APPLE__
-#include <sys/posix_sem.h>
-#elif !defined(PSEMNAMLEN)
+// #ifdef __APPLE__
+// #include <sys/posix_sem.h>
+// #elif !defined(PSEMNAMLEN)
+// #define PSEMNAMLEN 30UL
+// #endif
+
 #define PSEMNAMLEN 30UL
-#endif
 
 namespace ray {
 

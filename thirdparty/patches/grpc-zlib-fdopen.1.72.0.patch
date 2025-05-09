@@ -1,0 +1,14 @@
+diff --git bazel/grpc_deps.bzl bazel/grpc_deps.bzl
+index 46121a6583..c4ba2136c0 100644
+--- bazel/grpc_deps.bzl
++++ bazel/grpc_deps.bzl
+@@ -53,6 +53,9 @@ def grpc_deps():
+                 "https://storage.googleapis.com/grpc-bazel-mirror/github.com/madler/zlib/archive/f1f503da85d52e56aae11557b4d79a42bcaa2b86.tar.gz",
+                 "https://github.com/madler/zlib/archive/f1f503da85d52e56aae11557b4d79a42bcaa2b86.tar.gz",
+             ],
++            patches = [
++                "@com_github_ray_project_ray//thirdparty/patches:zlib-fdopen.patch",
++            ]
+         )
+ 
+     if "com_google_protobuf" not in native.existing_rules():

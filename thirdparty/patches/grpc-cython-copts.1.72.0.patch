@@ -1,0 +1,33 @@
+diff --git bazel/cython_library.bzl bazel/cython_library.bzl
+index 93e99962db..e0e6c331f0 100644
+--- bazel/cython_library.bzl
++++ bazel/cython_library.bzl
+@@ -19,7 +19,7 @@
+ # been written at cython/cython and tensorflow/tensorflow. We branch from
+ # Tensorflow's version as it is more actively maintained and works for gRPC
+ # Python's needs.
+-def pyx_library(name, deps = [], py_deps = [], srcs = [], **kwargs):
++def pyx_library(name, deps = [], cc_kwargs = {}, py_deps = [], srcs = [], **kwargs):
+     """Compiles a group of .pyx / .pxd / .py files.
+ 
+     First runs Cython to create .cpp files for each input .pyx or .py + .pxd
+@@ -70,14 +70,15 @@ def pyx_library(name, deps = [], py_deps = [], srcs = [], **kwargs):
+         stem = src.split(".")[0]
+         shared_object_name = stem + ".so"
+         native.cc_binary(
+-            name = shared_object_name,
+-            srcs = [stem + ".cpp"],
++            name = cc_kwargs.pop("name", shared_object_name),
++            srcs = [stem + ".cpp"] + cc_kwargs.pop("srcs", []),
+             deps = deps + [
+                 "@rules_python//python/cc:current_py_cc_headers",
+                 "@rules_python//python/cc:current_py_cc_libs",
+-            ],
++            ] + cc_kwargs.pop("deps", []),
+             defines = defines,
+-            linkshared = 1,
++            linkshared = cc_kwargs.pop("linkshared", 1),
++            **cc_kwargs
+         )
+         shared_objects.append(shared_object_name)
+ 

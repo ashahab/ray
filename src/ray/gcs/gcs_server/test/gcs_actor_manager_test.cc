@@ -1288,7 +1288,7 @@ TEST_F(GcsActorManagerTest, TestGetAllActorInfoFilters) {
     request.mutable_filters()->set_actor_id(actor->GetActorID().Binary());
 
     auto &reply =
-        *google::protobuf::Arena::CreateMessage<rpc::GetAllActorInfoReply>(&arena);
+        *google::protobuf::Arena::Create<rpc::GetAllActorInfoReply>(&arena);
     gcs_actor_manager_->HandleGetAllActorInfo(request, &reply, callback);
     ASSERT_EQ(reply.actor_table_data().size(), 1);
     ASSERT_EQ(reply.total(), 1 + num_other_actors);
@@ -1301,7 +1301,7 @@ TEST_F(GcsActorManagerTest, TestGetAllActorInfoFilters) {
     request.mutable_filters()->set_job_id(job_id.Binary());
 
     auto &reply =
-        *google::protobuf::Arena::CreateMessage<rpc::GetAllActorInfoReply>(&arena);
+        *google::protobuf::Arena::Create<rpc::GetAllActorInfoReply>(&arena);
     gcs_actor_manager_->HandleGetAllActorInfo(request, &reply, callback);
     ASSERT_EQ(reply.actor_table_data().size(), 1);
     ASSERT_EQ(reply.num_filtered(), num_other_actors);
@@ -1313,7 +1313,7 @@ TEST_F(GcsActorManagerTest, TestGetAllActorInfoFilters) {
     request.mutable_filters()->set_state(rpc::ActorTableData::ALIVE);
 
     auto &reply =
-        *google::protobuf::Arena::CreateMessage<rpc::GetAllActorInfoReply>(&arena);
+        *google::protobuf::Arena::Create<rpc::GetAllActorInfoReply>(&arena);
     gcs_actor_manager_->HandleGetAllActorInfo(request, &reply, callback);
     ASSERT_EQ(reply.actor_table_data().size(), 1);
     ASSERT_EQ(reply.num_filtered(), num_other_actors);
@@ -1326,7 +1326,7 @@ TEST_F(GcsActorManagerTest, TestGetAllActorInfoFilters) {
     request.mutable_filters()->set_job_id(job_id.Binary());
 
     auto &reply =
-        *google::protobuf::Arena::CreateMessage<rpc::GetAllActorInfoReply>(&arena);
+        *google::protobuf::Arena::Create<rpc::GetAllActorInfoReply>(&arena);
     gcs_actor_manager_->HandleGetAllActorInfo(request, &reply, callback);
     ASSERT_EQ(reply.actor_table_data().size(), 1);
     ASSERT_EQ(reply.num_filtered(), num_other_actors);
@@ -1337,7 +1337,7 @@ TEST_F(GcsActorManagerTest, TestGetAllActorInfoFilters) {
     request.mutable_filters()->set_job_id(job_id.Binary());
 
     auto &reply =
-        *google::protobuf::Arena::CreateMessage<rpc::GetAllActorInfoReply>(&arena);
+        *google::protobuf::Arena::Create<rpc::GetAllActorInfoReply>(&arena);
     gcs_actor_manager_->HandleGetAllActorInfo(request, &reply, callback);
     ASSERT_EQ(reply.num_filtered(), num_other_actors + 1);
     ASSERT_EQ(reply.actor_table_data().size(), 0);
@@ -1362,7 +1362,7 @@ TEST_F(GcsActorManagerTest, TestGetAllActorInfoLimit) {
   {
     rpc::GetAllActorInfoRequest request;
     auto &reply =
-        *google::protobuf::Arena::CreateMessage<rpc::GetAllActorInfoReply>(&arena);
+        *google::protobuf::Arena::Create<rpc::GetAllActorInfoReply>(&arena);
     auto callback = [](Status status,
                        std::function<void()> success,
                        std::function<void()> failure) {};
@@ -1371,7 +1371,7 @@ TEST_F(GcsActorManagerTest, TestGetAllActorInfoLimit) {
 
     request.set_limit(2);
     auto &reply_2 =
-        *google::protobuf::Arena::CreateMessage<rpc::GetAllActorInfoReply>(&arena);
+        *google::protobuf::Arena::Create<rpc::GetAllActorInfoReply>(&arena);
     gcs_actor_manager_->HandleGetAllActorInfo(request, &reply_2, callback);
     ASSERT_EQ(reply_2.actor_table_data().size(), 2);
     ASSERT_EQ(reply_2.total(), 3);

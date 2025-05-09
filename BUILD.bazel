@@ -11,7 +11,6 @@ load("@com_github_google_flatbuffers//:build_defs.bzl", "flatbuffer_cc_library")
 load("@com_github_grpc_grpc//bazel:cc_grpc_library.bzl", "cc_grpc_library")
 load("@com_github_grpc_grpc//bazel:cython_library.bzl", "pyx_library")
 load("@hedron_compile_commands//:refresh_compile_commands.bzl", "refresh_compile_commands")
-load("@python3_9//:defs.bzl", python39 = "interpreter")
 load("@rules_cc//cc:defs.bzl", "cc_proto_library")
 load("@rules_proto//proto:defs.bzl", "proto_library")
 load("@rules_python//python:defs.bzl", "py_library", "py_runtime", "py_runtime_pair")
@@ -25,7 +24,7 @@ package(
 
 py_runtime(
     name = "python3_runtime",
-    interpreter = python39,
+    interpreter = "@python_3_9_13_host//:python",
     python_version = "PY3",
     visibility = ["//visibility:private"],
 )
@@ -416,6 +415,7 @@ ray_cc_library(
     name = "ray_mock",
     hdrs = glob(
         ["src/mock/**/*.h"],
+        allow_empty = True,
         exclude = ["src/mock/ray/common/ray_syncer/ray_syncer.h"],
     ),
 )
@@ -864,13 +864,15 @@ ray_cc_library(
             "src/shims/windows/**/*.c",
             "src/shims/windows/**/*.cc",
             "src/shims/windows/**/*.h",
-        ]),
+        ],
+        allow_empty = True),
         "//conditions:default": [],
     }),
     hdrs = [] + select({
         "@platforms//os:windows": glob([
             "src/shims/windows/**/*.h",
-        ]),
+        ],
+        allow_empty = True),
         "//conditions:default": [],
     }),
     strip_include_prefix = select({
@@ -966,7 +968,8 @@ pyx_library(
         "python/ray/_raylet.pyx",
         "python/ray/includes/*.pxd",
         "python/ray/includes/*.pxi",
-    ]),
+    ],
+    allow_empty = True),
     # Export ray ABI symbols, which can then be used by _streaming.so.
     # We need to dlopen this lib with RTLD_GLOBAL to use ABI in this
     # shared lib, see python/ray/__init__.py.
@@ -1026,7 +1029,8 @@ filegroup(
         "python/ray/util/*.py",
         "python/ray/internal/*.py",
         "python/ray/workers/default_worker.py",
-    ]),
+    ],
+    allow_empty = True),
 )
 
 alias(
@@ -1079,6 +1083,7 @@ py_library(
     name = "ray_lib",
     srcs = glob(
         ["python/ray/**/*.py"],
+        allow_empty = True,
         exclude = ["python/ray/tests/*.py"],
     ),
     visibility = ["__subpackages__"],
