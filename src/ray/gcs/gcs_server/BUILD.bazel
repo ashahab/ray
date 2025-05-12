@@ -134,21 +134,21 @@ load("//bazel:ray.bzl", "ray_cc_binary", "ray_cc_library")
 #     ],
 # )
 
-ray_cc_library(
-    name = "gcs_health_check_manager",
-    srcs = ["gcs_health_check_manager.cc"],
-    hdrs = ["gcs_health_check_manager.h"],
-    deps = [
-        "//src/ray/common:asio",
-        "//src/ray/common:id",
-        "//src/ray/common:ray_config",
-        "//src/ray/stats:stats_metric",
-        "//src/ray/util:thread_checker",
-        "@com_github_grpc_grpc//:grpc++",
-        "@com_github_grpc_grpc//src/proto/grpc/health/v1:health_proto",
-        "@com_google_absl//absl/container:flat_hash_map",
-    ],
-)
+#ray_cc_library(
+#    name = "gcs_health_check_manager",
+#    srcs = ["gcs_health_check_manager.cc"],
+#    hdrs = ["gcs_health_check_manager.h"],
+#    deps = [
+#        "//src/ray/common:asio",
+#        "//src/ray/common:id",
+#        "//src/ray/common:ray_config",
+#        "//src/ray/stats:stats_metric",
+#        "//src/ray/util:thread_checker",
+#        "@com_github_grpc_grpc//:grpc++",
+#        "@com_github_grpc_grpc//src/proto/grpc/health/v1:health_proto",
+#        "@com_google_absl//absl/container:flat_hash_map",
+#    ],
+#)
 
 # ray_cc_library(
 #     name = "gcs_task_manager",
@@ -227,7 +227,7 @@ ray_cc_library(
     ],
     deps = [
         ":gcs_function_manager",
-        ":gcs_health_check_manager",
+        # ":gcs_health_check_manager",
         ":gcs_init_data",
         ":gcs_job_manager",
         ":gcs_kv_manager",

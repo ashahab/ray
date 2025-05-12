@@ -123,7 +123,7 @@ use_repo(
     "boost",
 )
 
-bazel_dep(name="rules_python", version="1.4.0")
+bazel_dep(name="rules_python", version="1.4.1")
 python = use_extension("@rules_python//python/extensions:python.bzl", "python")
 python.toolchain(
     configure_coverage_tool = True,
