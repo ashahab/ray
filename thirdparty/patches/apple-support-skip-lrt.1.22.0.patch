@@ -1,0 +1,13 @@
+diff --git crosstool/osx_cc_wrapper.sh.tpl crosstool/osx_cc_wrapper.sh.tpl
+index 0c78615..9f43125 100755
+--- crosstool/osx_cc_wrapper.sh.tpl
++++ crosstool/osx_cc_wrapper.sh.tpl
+@@ -55,6 +55,8 @@ function parse_option() {
+ 
+ # let parse the option list
+ for i in "$@"; do
++    sed "/-lrt/d" ${i:1} > ${i:1}.processed
++    cp ${i:1}.processed ${i:1}
+     if [[ "$i" = @* && -r "${i:1}" ]]; then
+         while IFS= read -r opt
+         do
