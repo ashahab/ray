@@ -58,7 +58,7 @@ py_test(
     name = "test_formats",
     size = "medium",
     srcs = ["tests/test_formats.py"],
-    data = glob(["tests/image-folder/**/*"]),
+    data = glob(["tests/image-folder/**/*"], allow_empty=True),
     tags = [
         "exclusive",
         "team:data",

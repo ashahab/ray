@@ -8,7 +8,7 @@ doctest(
             "examples/**/*",
             "tests/**/*",
             "callbacks/*.py",
-        ]) + ["integrations/wandb.py"],
+        ], allow_empty=True) + ["integrations/wandb.py"],
     ),  # TODO: Add note for callbacks
     tags = ["team:ml"],
 )
