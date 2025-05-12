@@ -1,0 +1,91 @@
+diff --git BUILD.bazel BUILD.bazel
+index efd4bbee..6ac007c1 100644
+--- BUILD.bazel
++++ BUILD.bazel
+@@ -116,6 +116,7 @@ cc_binary(
+         "@bazel_tools//src/conditions:linux_aarch64": _LINUX_ARM64_OPENSSL_APP_SRCS,
+         "@bazel_tools//src/conditions:linux_x86_64": _LINUX_X86_64_OPENSSL_APP_SRCS,
+         "@bazel_tools//src/conditions:darwin_arm64": _DARWIN_ARM64_OPENSSL_APP_SRCS,
++        "@platforms//os:ios": _DARWIN_ARM64_OPENSSL_APP_SRCS,
+         "@bazel_tools//src/conditions:darwin_x86_64": _DARWIN_X86_64_OPENSSL_APP_SRCS,
+     }),
+     copts = [
+@@ -129,6 +130,7 @@ cc_binary(
+         "@bazel_tools//src/conditions:linux_aarch64": _LINUX_ARM64_OPENSSL_APP_DEFINES,
+         "@bazel_tools//src/conditions:linux_x86_64": _LINUX_X86_64_OPENSSL_APP_DEFINES,
+         "@bazel_tools//src/conditions:darwin_arm64": _DARWIN_ARM64_OPENSSL_APP_DEFINES,
++        "@platforms//os:ios": _DARWIN_ARM64_OPENSSL_APP_SRCS,
+         "@bazel_tools//src/conditions:darwin_x86_64": _DARWIN_X86_64_OPENSSL_APP_DEFINES,
+     }),
+     visibility = ["//visibility:public"],
+@@ -183,6 +185,7 @@ cc_library(
+         "@bazel_tools//src/conditions:linux_aarch64": _LINUX_ARM64_LIBCRYPTO_SRCS,
+         "@bazel_tools//src/conditions:linux_x86_64": _LINUX_X86_64_LIBCRYPTO_SRCS,
+         "@bazel_tools//src/conditions:darwin_arm64": _DARWIN_ARM64_LIBCRYPTO_SRCS,
++        "@platforms//os:ios": _DARWIN_ARM64_LIBCRYPTO_SRCS,
+         "@bazel_tools//src/conditions:darwin_x86_64": _DARWIN_X86_64_LIBCRYPTO_SRCS,
+     }),
+     hdrs = glob(
+@@ -218,11 +221,13 @@ cc_library(
+         "@bazel_tools//src/conditions:linux_aarch64": _LINUX_ARM64_OPENSSL_DEFINES,
+         "@bazel_tools//src/conditions:linux_x86_64": _LINUX_X86_64_OPENSSL_DEFINES,
+         "@bazel_tools//src/conditions:darwin_arm64": _DARWIN_ARM64_OPENSSL_DEFINES,
++        "@platforms//os:ios": _DARWIN_ARM64_OPENSSL_DEFINES,
+         "@bazel_tools//src/conditions:darwin_x86_64": _DARWIN_X86_64_OPENSSL_DEFINES,
+     }) + select({
+         "@bazel_tools//src/conditions:linux_aarch64": _LINUX_ARM64_LIBCRYPTO_DEFINES,
+         "@bazel_tools//src/conditions:linux_x86_64": _LINUX_X86_64_LIBCRYPTO_DEFINES,
+         "@bazel_tools//src/conditions:darwin_arm64": _DARWIN_ARM64_LIBCRYPTO_DEFINES,
++        "@platforms//os:ios": _DARWIN_ARM64_LIBCRYPTO_DEFINES,
+         "@bazel_tools//src/conditions:darwin_x86_64": _DARWIN_X86_64_LIBCRYPTO_DEFINES,
+     }),
+     # To make sure downstream targets add the right copts to be able to include the headers.
+@@ -246,6 +251,7 @@ cc_library(
+         "@bazel_tools//src/conditions:linux_aarch64": _LINUX_ARM64_LIBSSL_SRCS,
+         "@bazel_tools//src/conditions:linux_x86_64": _LINUX_X86_64_LIBSSL_SRCS,
+         "@bazel_tools//src/conditions:darwin_arm64": _DARWIN_ARM64_LIBSSL_SRCS,
++        "@platforms//os:ios": _DARWIN_ARM64_LIBSSL_SRCS,
+         "@bazel_tools//src/conditions:darwin_x86_64": _DARWIN_X86_64_LIBSSL_SRCS,
+     }),
+     hdrs = glob(
+@@ -256,11 +262,13 @@ cc_library(
+         "@bazel_tools//src/conditions:linux_aarch64": _LINUX_ARM64_OPENSSL_DEFINES,
+         "@bazel_tools//src/conditions:linux_x86_64": _LINUX_X86_64_OPENSSL_DEFINES,
+         "@bazel_tools//src/conditions:darwin_arm64": _DARWIN_ARM64_OPENSSL_DEFINES,
++        "@platforms//os:ios": _DARWIN_ARM64_OPENSSL_DEFINES,
+         "@bazel_tools//src/conditions:darwin_x86_64": _DARWIN_X86_64_OPENSSL_DEFINES,
+     }) + select({
+         "@bazel_tools//src/conditions:linux_aarch64": _LINUX_ARM64_LIBSSL_DEFINES,
+         "@bazel_tools//src/conditions:linux_x86_64": _LINUX_X86_64_LIBSSL_DEFINES,
+         "@bazel_tools//src/conditions:darwin_arm64": _DARWIN_ARM64_LIBSSL_DEFINES,
++        "@platforms//os:ios": _DARWIN_ARM64_LIBSSL_DEFINES,
+         "@bazel_tools//src/conditions:darwin_x86_64": _DARWIN_X86_64_LIBSSL_DEFINES,
+     }),
+     # To make sure downstream targets add the right copts to be able to include the headers.
+@@ -290,6 +298,7 @@ CC_ENV_CMD = """export CC=$(CC)\n"""
+             "@bazel_tools//src/conditions:linux_aarch64": CC_ENV_CMD + _LINUX_ARM64_PERLASM_GEN,
+             "@bazel_tools//src/conditions:linux_x86_64": CC_ENV_CMD + _LINUX_X86_64_PERLASM_GEN,
+             "@bazel_tools//src/conditions:darwin_arm64": CC_ENV_CMD + _DARWIN_ARM64_PERLASM_GEN,
++            "@platforms//os:ios": CC_ENV_CMD + _DARWIN_ARM64_PERLASM_GEN,
+             "@bazel_tools//src/conditions:darwin_x86_64": CC_ENV_CMD + _DARWIN_X86_64_PERLASM_GEN,
+         }),
+         target_compatible_with = [{
+@@ -304,6 +313,7 @@ CC_ENV_CMD = """export CC=$(CC)\n"""
+             "@bazel_tools//src/conditions:linux_aarch64": depset(direct = _LINUX_ARM64_PERLASM_TOOLS).to_list(),
+             "@bazel_tools//src/conditions:linux_x86_64": depset(direct = _LINUX_X86_64_PERLASM_TOOLS).to_list(),
+             "@bazel_tools//src/conditions:darwin_arm64": depset(direct = _DARWIN_ARM64_PERLASM_TOOLS).to_list(),
++            "@platforms//os:ios": depset(direct = _DARWIN_ARM64_PERLASM_TOOLS).to_list(),
+             "@bazel_tools//src/conditions:darwin_x86_64": depset(direct = _DARWIN_X86_64_PERLASM_TOOLS).to_list(),
+         }),
+     )
+@@ -355,6 +365,10 @@ genrule(
+             contents = v,
+             filename = k,
+         ) for k, v in _DARWIN_ARM64_GEN_FILES.items()]),
++        "@platforms//os:ios": "\n".join([GEN_FILE_CMD.format(
++            contents = v,
++            filename = k,
++        ) for k, v in _DARWIN_ARM64_GEN_FILES.items()]),
+         "@bazel_tools//src/conditions:darwin_x86_64": "\n".join([GEN_FILE_CMD.format(
+             contents = v,
+             filename = k,
