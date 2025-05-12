@@ -119,68 +119,43 @@ genrule(
         "libray_api.so",
     ],
     outs = ["ray_cpp_pkg.out"],
-    cmd = """
+    cmd_bash = """
         WORK_DIR="$$(pwd)" &&
         PY_CPP_DIR="$$WORK_DIR/python/ray/cpp" &&
         rm -rf $$PY_CPP_DIR &&
         BOOST_DIR="$$PY_CPP_DIR/include/boost/" &&
+        HPP_FILES="$$(find $$WORK_DIR/external/rules_boost++non_module_dependencies+boost/libs -name '*.hpp')" &&
         mkdir -p "$$BOOST_DIR" &&
         mkdir -p "$$PY_CPP_DIR/lib/" &&
         cp -f $(location default_worker) "$$PY_CPP_DIR/" &&
         cp -f -r $$WORK_DIR/external/msgpack-c+/include/* "$$PY_CPP_DIR/include" &&
         cp -f -r $$WORK_DIR/external/+_repo_rules+nlohmann_json/single_include/* "$$PY_CPP_DIR/include" &&
-        cp -f -r "$$WORK_DIR/external/rules_boost++non_module_dependenc
-ies+boost/libs/archive" "$$BOOST_DIR" &&
-        cp -f -r "$$WORK_DIR/external/rules_boost++non_module_dependenc
-ies+boost/libs/assert" "$$BOOST_DIR" &&
-        cp -f -r "$$WORK_DIR/external/rules_boost++non_module_dependenc
-ies+boost/libs/bind" "$$BOOST_DIR" &&
-        cp -f -r "$$WORK_DIR/external/rules_boost++non_module_dependenc
-ies+boost/libs/callable_traits" "$$BOOST_DIR" &&
-        cp -f -r "$$WORK_DIR/external/rules_boost++non_module_dependenc
-ies+boost/libs/concept" "$$BOOST_DIR" &&
-        cp -f -r "$$WORK_DIR/external/rules_boost++non_module_dependenc
-ies+boost/libs/config" "$$BOOST_DIR" &&
-        cp -f -r "$$WORK_DIR/external/rules_boost++non_module_dependenc
-ies+boost/libs/container" "$$BOOST_DIR" &&
-        cp -f -r "$$WORK_DIR/external/rules_boost++non_module_dependenc
-ies+boost/libs/container_hash" "$$BOOST_DIR" &&
-        cp -f -r "$$WORK_DIR/external/rules_boost++non_module_dependenc
-ies+boost/libs/core" "$$BOOST_DIR" &&
-        cp -f -r "$$WORK_DIR/external/rules_boost++non_module_dependenc
-ies+boost/libs/detail" "$$BOOST_DIR" &&
-        cp -f -r "$$WORK_DIR/external/rules_boost++non_module_dependenc
-ies+boost/libs/dll" "$$BOOST_DIR" &&
-        cp -f -r "$$WORK_DIR/external/rules_boost++non_module_dependenc
-ies+boost/libs/exception" "$$BOOST_DIR" &&
-        cp -f -r "$$WORK_DIR/external/rules_boost++non_module_dependenc
-ies+boost/libs/filesystem" "$$BOOST_DIR" &&
-        cp -f -r "$$WORK_DIR/external/rules_boost++non_module_dependenc
-ies+boost/libs/functional" "$$BOOST_DIR" &&
-        cp -f -r "$$WORK_DIR/external/rules_boost++non_module_dependenc
-ies+boost/libs/io" "$$BOOST_DIR" &&
-        cp -f -r "$$WORK_DIR/external/rules_boost++non_module_dependenc
-ies+boost/libs/iterator" "$$BOOST_DIR" &&
-        cp -f -r "$$WORK_DIR/external/rules_boost++non_module_dependenc
-ies+boost/libs/lexical_cast" "$$BOOST_DIR" &&
-        cp -f -r "$$WORK_DIR/external/rules_boost++non_module_dependenc
-ies+boost/libs/move" "$$BOOST_DIR" &&
-        cp -f -r "$$WORK_DIR/external/rules_boost++non_module_dependenc
-ies+boost/libs/mpl" "$$BOOST_DIR" &&
-        cp -f -r "$$WORK_DIR/external/rules_boost++non_module_dependenc
-ies+boost/libs/optional" "$$BOOST_DIR" &&
-        cp -f -r "$$WORK_DIR/external/rules_boost++non_module_dependenc
-ies+boost/libs/parameter" "$$BOOST_DIR" &&
-        cp -f -r "$$WORK_DIR/external/rules_boost++non_module_dependenc
-ies+boost/libs/preprocessor" "$$BOOST_DIR" &&
-        cp -f -r "$$WORK_DIR/external/rules_boost++non_module_dependenc
-ies+boost/libs/system" "$$BOOST_DIR" &&
-        cp -f -r "$$WORK_DIR/external/rules_boost++non_module_dependenc
-ies+boost/libs/type_traits" "$$BOOST_DIR" &&
-        cp -f -r "$$WORK_DIR/external/rules_boost++non_module_dependenc
-ies+boost/libs/utility" "$$BOOST_DIR" &&
-        cp -f $(find $$WORK_DIR/external/rules_boost++non_module_dependenc
-ies+boost/libs -name "*.hpp") "$$BOOST_DIR" &&
+        cp -f -r "$$WORK_DIR/external/rules_boost++non_module_dependencies+boost/libs/archive" "$$BOOST_DIR" &&
+        cp -f -r "$$WORK_DIR/external/rules_boost++non_module_dependencies+boost/libs/assert" "$$BOOST_DIR" &&
+        cp -f -r "$$WORK_DIR/external/rules_boost++non_module_dependencies+boost/libs/bind" "$$BOOST_DIR" &&
+        cp -f -r "$$WORK_DIR/external/rules_boost++non_module_dependencies+boost/libs/callable_traits" "$$BOOST_DIR" &&
+        cp -f -r "$$WORK_DIR/external/rules_boost++non_module_dependencies+boost/libs/concept" "$$BOOST_DIR" &&
+        cp -f -r "$$WORK_DIR/external/rules_boost++non_module_dependencies+boost/libs/config" "$$BOOST_DIR" &&
+        cp -f -r "$$WORK_DIR/external/rules_boost++non_module_dependencies+boost/libs/container" "$$BOOST_DIR" &&
+        cp -f -r "$$WORK_DIR/external/rules_boost++non_module_dependencies+boost/libs/container_hash" "$$BOOST_DIR" &&
+        cp -f -r "$$WORK_DIR/external/rules_boost++non_module_dependencies+boost/libs/core" "$$BOOST_DIR" &&
+        cp -f -r "$$WORK_DIR/external/rules_boost++non_module_dependencies+boost/libs/detail" "$$BOOST_DIR" &&
+        cp -f -r "$$WORK_DIR/external/rules_boost++non_module_dependencies+boost/libs/dll" "$$BOOST_DIR" &&
+        cp -f -r "$$WORK_DIR/external/rules_boost++non_module_dependencies+boost/libs/exception" "$$BOOST_DIR" &&
+        cp -f -r "$$WORK_DIR/external/rules_boost++non_module_dependencies+boost/libs/filesystem" "$$BOOST_DIR" &&
+        cp -f -r "$$WORK_DIR/external/rules_boost++non_module_dependencies+boost/libs/functional" "$$BOOST_DIR" &&
+        cp -f -r "$$WORK_DIR/external/rules_boost++non_module_dependencies+boost/libs/io" "$$BOOST_DIR" &&
+        cp -f -r "$$WORK_DIR/external/rules_boost++non_module_dependencies+boost/libs/iterator" "$$BOOST_DIR" &&
+        cp -f -r "$$WORK_DIR/external/rules_boost++non_module_dependencies+boost/libs/lexical_cast" "$$BOOST_DIR" &&
+        cp -f -r "$$WORK_DIR/external/rules_boost++non_module_dependencies+boost/libs/move" "$$BOOST_DIR" &&
+        cp -f -r "$$WORK_DIR/external/rules_boost++non_module_dependencies+boost/libs/mpl" "$$BOOST_DIR" &&
+        cp -f -r "$$WORK_DIR/external/rules_boost++non_module_dependencies+boost/libs/optional" "$$BOOST_DIR" &&
+        cp -f -r "$$WORK_DIR/external/rules_boost++non_module_dependencies+boost/libs/parameter" "$$BOOST_DIR" &&
+        cp -f -r "$$WORK_DIR/external/rules_boost++non_module_dependencies+boost/libs/preprocessor" "$$BOOST_DIR" &&
+        cp -f -r "$$WORK_DIR/external/rules_boost++non_module_dependencies+boost/libs/system" "$$BOOST_DIR" &&
+        cp -f -r "$$WORK_DIR/external/rules_boost++non_module_dependencies+boost/libs/type_traits" "$$BOOST_DIR" &&
+        cp -f -r "$$WORK_DIR/external/rules_boost++non_module_dependencies+boost/libs/utility" "$$BOOST_DIR" &&
+        cp -f "$$HPP_FILES" "$$BOOST_DIR" &&
         cp -f $(locations libray_api.so) "$$PY_CPP_DIR/lib/" &&
         cp -f -r "$$WORK_DIR/cpp/include/ray" "$$PY_CPP_DIR/include" &&
         THIRDPARTY_DIR="$$WORK_DIR/cpp/example/thirdparty" &&
