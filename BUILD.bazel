@@ -47,7 +47,7 @@ toolchain(
     name = "python_toolchain",
     exec_compatible_with = [":hermetic_python"],
     toolchain = ":python_runtime_pair",
-    toolchain_type = "@bazel_tools//tools/python:toolchain_type",
+    toolchain_type = "@rules_python//python/cc:toolchain_type",
 )
 
 platform(

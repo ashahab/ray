@@ -9,12 +9,15 @@ py_library(
         exclude=[
             "**/Tests/*.py",
         ],
+        allow_empty = True,
     ) + ["cython.py"],
     data=glob([
         "Cython/**/*.pyx",
         "Cython/Utility/*.*",
         "Cython/Includes/**/*.pxd",
-    ]),
+    ],
+    allow_empty = True,
+    ),
     srcs_version="PY2AND3",
     visibility=["//visibility:public"],
 )
