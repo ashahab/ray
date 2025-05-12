@@ -1149,11 +1149,11 @@ copy_to_workspace(
     dstdir = "python/ray/core/src/ray/raylet",
 )
 
-copy_to_workspace(
-    name = "cp_gcs_server",
-    srcs = ["//src/ray/gcs/gcs_server"],
-    dstdir = "python/ray/core/src/ray/gcs",
-)
+# copy_to_workspace(
+#     name = "cp_gcs_server",
+#     srcs = ["//src/ray/gcs/gcs_server"],
+#     dstdir = "python/ray/core/src/ray/gcs",
+# )
 
 copy_to_workspace(
     name = "cp_jemalloc",
@@ -1204,7 +1204,7 @@ genrule(
         ":install_py_proto",
         ":cp_redis",
         ":cp_raylet",
-        ":cp_gcs_server",
+        # ":cp_gcs_server",
     ] + select({
         ":jemalloc": [
             ":cp_jemalloc",
