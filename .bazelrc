@@ -36,7 +36,7 @@ build:ios --copt="-fPIC"
 build:macos --copt="-fPIC"
 # build:ios --linkopt="-mplatform_version"
 # build:ios --linkopt="ios"
-# build:ios --linkopt="18.4"
+# build:ios --linkopt="19.0"
 # build:ios --linkopt="16.3"
 
 common --experimental_platform_in_output_dir --enable_bzlmod

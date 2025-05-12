@@ -75,6 +75,12 @@ single_version_override(
     ],
 )
 bazel_dep(name = "openssl", version = "3.3.1.bcr.1")
+single_version_override(
+    module_name = "openssl",
+    patches = [
+        "//:thirdparty/patches/openssl.patch",
+    ],
+)
 bazel_dep(name = "googletest", version = "1.17.0", repo_name = "com_google_googletest")
 bazel_dep(name = "gflags", version = "2.2.2", repo_name = "com_github_gflags_gflags")
 bazel_dep(name = "xz", version = "5.4.5.bcr.5")
