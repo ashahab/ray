@@ -10,6 +10,9 @@ cc_binary(
         "@platforms//os:osx": [
             #TODO(larry): Hide the symbols when we make it work on mac.
         ],
+        "@platforms//os:ios": [
+            #TODO(larry): Hide the symbols when we make it work on mac.
+        ],
         "@platforms//os:windows": [
             #TODO(larry): Hide the symbols when we make it work on Windows.
         ],
