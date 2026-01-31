@@ -18,6 +18,8 @@
 #include <utility>
 #include <vector>
 
+#include "ray/common/ray_config.h"
+
 namespace ray {
 namespace core {
 namespace experimental {
@@ -164,6 +166,36 @@ void MutableObjectProvider::HandlePushMutableObject(
       reply->set_done(true);
       return;
     }
+
+    // Step 1.5: Check per-write timeout for active writes
+    // If the write has been in progress for too long, abort it to prevent hangs.
+    int64_t write_timeout_ms = RayConfig::instance().mutable_object_write_timeout_ms();
+    if (write_timeout_ms > 0) {
+      auto it = write_start_time_.find(writer_object_id);
+      if (it != write_start_time_.end()) {
+        auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(
+                           std::chrono::steady_clock::now() - it->second)
+                           .count();
+        if (elapsed > write_timeout_ms) {
+          RAY_LOG(ERROR) << "Mutable object write timeout for " << writer_object_id
+                         << " after " << elapsed << "ms. Write started but did not "
+                         << "complete within " << write_timeout_ms << "ms. "
+                         << "This may indicate lost chunks despite retries. "
+                         << "Aborting write to prevent hang.";
+          // Clean up stalled write state
+          written_so_far_.erase(writer_object_id);
+          received_chunks_.erase(writer_object_id);
+          write_acquired_.erase(writer_object_id);
+          write_start_time_.erase(writer_object_id);
+          // Note: We increment highest_completed to skip this version entirely
+          // so future chunks for this version are treated as stale.
+          highest_completed_version_[writer_object_id] = request_version;
+          // Signal failure - the sender's callback will be invoked with error
+          reply->set_done(true);
+          return;
+        }
+      }
+    }
   }
 
   // Step 2: Determine if this is active version or future version
@@ -210,10 +242,11 @@ void MutableObjectProvider::HandlePushMutableObject(
 
   std::shared_ptr<Buffer> object_backing_store;
   if (needs_write_acquire) {
-    // Initialize written_so_far_ for new write
+    // Initialize written_so_far_ for new write and record start time for timeout tracking
     {
       absl::MutexLock guard(&written_so_far_lock_);
       written_so_far_[writer_object_id] = 0;
+      write_start_time_[writer_object_id] = std::chrono::steady_clock::now();
     }
     // First chunk to arrive (may not be offset 0 due to out-of-order delivery) -
     // acquire write lock and allocate backing store.
@@ -235,13 +268,35 @@ void MutableObjectProvider::HandlePushMutableObject(
     // Wait until WriteAcquire has completed before calling GetObjectBackingStore.
     // This prevents the race condition where we check write_acquired_ before
     // WriteAcquire() has actually completed.
+    // Use timeout to prevent indefinite blocking if WriteAcquire fails.
+    bool write_acquired_success = false;
     {
       absl::MutexLock guard(&written_so_far_lock_);
       auto condition = [this, &writer_object_id]()
                            ABSL_SHARED_LOCKS_REQUIRED(written_so_far_lock_) {
                              return write_acquired_[writer_object_id];
                            };
-      written_so_far_lock_.Await(absl::Condition(&condition));
+
+      int64_t acquire_timeout_ms =
+          RayConfig::instance().mutable_object_write_acquire_timeout_ms();
+      if (acquire_timeout_ms > 0) {
+        // Use timeout to prevent deadlock if WriteAcquire fails
+        write_acquired_success = written_so_far_lock_.AwaitWithTimeout(
+            absl::Condition(&condition), absl::Milliseconds(acquire_timeout_ms));
+      } else {
+        // Timeout disabled - wait indefinitely (original behavior)
+        written_so_far_lock_.Await(absl::Condition(&condition));
+        write_acquired_success = true;
+      }
+    }
+
+    if (!write_acquired_success) {
+      RAY_LOG(WARNING) << "Timeout waiting for WriteAcquire to complete for "
+                       << writer_object_id << ". This may indicate WriteAcquire failed "
+                       << "or is taking too long. Signaling retry.";
+      // Don't set done=true, let the sender retry this chunk
+      reply->set_done(false);
+      return;
     }
     // Subsequent chunk (or chunk arriving after WriteAcquire was called by another chunk)
     // - get existing backing store.
@@ -302,6 +357,7 @@ void MutableObjectProvider::HandlePushMutableObject(
       // Clear per-object tracking for next write
       written_so_far_.erase(writer_object_id);
       write_acquired_.erase(writer_object_id);
+      write_start_time_.erase(writer_object_id);
 
       // Clean up received_chunks_ entry if empty
       if (chunks.empty()) {

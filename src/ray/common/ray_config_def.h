@@ -1040,3 +1040,19 @@ RAY_CONFIG(size_t, gcs_resource_broadcast_max_batch_size, 1)
 // before the timeout, the batch will be broadcasted eagerly. This flag only applies if
 // `gcs_resource_broadcast_max_batch_size != 1`.
 RAY_CONFIG(uint64_t, gcs_resource_broadcast_max_batch_delay_ms, 0)
+
+/// Compiled DAG / Mutable Object settings
+
+/// Timeout in milliseconds for waiting on WriteAcquire to complete when handling
+/// out-of-order chunks in PushMutableObject. If a chunk arrives before WriteAcquire
+/// has completed (called by another chunk), this timeout prevents indefinite blocking
+/// if WriteAcquire fails. Set to 0 to disable timeout (wait indefinitely).
+/// Default: 30 seconds.
+RAY_CONFIG(int64_t, mutable_object_write_acquire_timeout_ms, 30000)
+
+/// Timeout in milliseconds for an entire mutable object write to complete (all chunks
+/// received). If chunks stop arriving and the write is incomplete for longer than this
+/// duration, the write is considered stalled and will be aborted. This prevents hangs
+/// when some chunks are permanently lost despite retries. Set to 0 to disable.
+/// Default: 60 seconds.
+RAY_CONFIG(int64_t, mutable_object_write_timeout_ms, 60000)

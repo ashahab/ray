@@ -13,6 +13,7 @@
 // limitations under the License.
 #pragma once
 
+#include <chrono>
 #include <memory>
 #include <unordered_map>
 #include <unordered_set>
@@ -277,6 +278,12 @@ class MutableObjectProvider : public MutableObjectProviderInterface {
   // Versions <= highest_completed are stale retries and are discarded.
   // Versions > highest_completed + 1 are buffered for future processing.
   std::unordered_map<ObjectID, int64_t> highest_completed_version_
+      ABSL_GUARDED_BY(written_so_far_lock_);
+
+  // Tracks the start time of each active write for per-write timeout detection.
+  // If a write takes longer than mutable_object_write_timeout_ms to complete,
+  // it is considered stalled and will be aborted.
+  std::unordered_map<ObjectID, std::chrono::steady_clock::time_point> write_start_time_
       ABSL_GUARDED_BY(written_so_far_lock_);
 
   friend class MutableObjectProvider_MutableObjectBufferReadRelease_Test;
