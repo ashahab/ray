@@ -133,4 +133,57 @@ inline ray::stats::Gauge GetOperationActiveCountGaugeMetric() {
   };
 }
 
+/// Mutable Object / Compiled DAG metrics
+
+inline ray::stats::Gauge GetMutableObjectActiveWritesGaugeMetric() {
+  /// Tracks the number of active mutable object writes in progress.
+  return ray::stats::Gauge{
+      /*name=*/"mutable_object_active_writes",
+      /*description=*/"Number of mutable object writes currently in progress",
+      /*unit=*/"",
+      /*tag_keys=*/{},
+  };
+}
+
+inline ray::stats::Count GetMutableObjectWritesCompletedCounterMetric() {
+  /// Counts the total number of completed mutable object writes.
+  return ray::stats::Count{
+      /*name=*/"mutable_object_writes_completed",
+      /*description=*/"Total number of completed mutable object writes",
+      /*unit=*/"",
+      /*tag_keys=*/{"Status"},  // "success" or "timeout"
+  };
+}
+
+inline ray::stats::Count GetMutableObjectChunksReceivedCounterMetric() {
+  /// Counts the total number of chunks received for mutable objects.
+  return ray::stats::Count{
+      /*name=*/"mutable_object_chunks_received",
+      /*description=*/"Total number of mutable object chunks received",
+      /*unit=*/"",
+      /*tag_keys=*/{"Type"},  // "new", "duplicate", "stale", "future"
+  };
+}
+
+inline ray::stats::Histogram GetMutableObjectWriteDurationMsHistogramMetric() {
+  /// Tracks the duration of mutable object writes.
+  return ray::stats::Histogram{
+      /*name=*/"mutable_object_write_duration_ms",
+      /*description=*/"Duration of mutable object writes",
+      /*unit=*/"ms",
+      /*boundaries=*/{10, 50, 100, 500, 1000, 5000, 10000, 30000, 60000},
+      /*tag_keys=*/{"Status"},  // "success" or "timeout"
+  };
+}
+
+inline ray::stats::Gauge GetMutableObjectBytesInFlightGaugeMetric() {
+  /// Tracks the total bytes of mutable object data currently in flight.
+  return ray::stats::Gauge{
+      /*name=*/"mutable_object_bytes_in_flight",
+      /*description=*/"Total bytes of mutable object data currently being written",
+      /*unit=*/"bytes",
+      /*tag_keys=*/{},
+  };
+}
+
 }  // namespace ray

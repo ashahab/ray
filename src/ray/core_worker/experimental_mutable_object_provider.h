@@ -21,6 +21,7 @@
 #include <vector>
 
 #include "ray/common/asio/instrumented_io_context.h"
+#include "ray/common/metrics.h"
 #include "ray/core_worker/experimental_mutable_object_manager.h"
 #include "ray/raylet_rpc_client/raylet_client_interface.h"
 #include "ray/rpc/client_call.h"
@@ -285,6 +286,20 @@ class MutableObjectProvider : public MutableObjectProviderInterface {
   // it is considered stalled and will be aborted.
   std::unordered_map<ObjectID, std::chrono::steady_clock::time_point> write_start_time_
       ABSL_GUARDED_BY(written_so_far_lock_);
+
+  // Tracks the total data size expected for each active write (for metrics).
+  std::unordered_map<ObjectID, uint64_t> write_total_size_
+      ABSL_GUARDED_BY(written_so_far_lock_);
+
+  // Metrics for observability
+  ray::stats::Gauge active_writes_gauge_{GetMutableObjectActiveWritesGaugeMetric()};
+  ray::stats::Count writes_completed_counter_{
+      GetMutableObjectWritesCompletedCounterMetric()};
+  ray::stats::Count chunks_received_counter_{
+      GetMutableObjectChunksReceivedCounterMetric()};
+  ray::stats::Histogram write_duration_histogram_{
+      GetMutableObjectWriteDurationMsHistogramMetric()};
+  ray::stats::Gauge bytes_in_flight_gauge_{GetMutableObjectBytesInFlightGaugeMetric()};
 
   friend class MutableObjectProvider_MutableObjectBufferReadRelease_Test;
 };

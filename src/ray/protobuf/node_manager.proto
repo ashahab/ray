@@ -390,6 +390,18 @@ message PushMutableObjectReply {
   // The receiver sets this to true once it has received all chunks for a mutable object
   // write, false otherwise (i.e., the receiver still expects to receive more chunks).
   bool done = 1;
+
+  // Set to true when a permanent error occurred (e.g., write timeout, resource exhaustion).
+  // When error is true, the sender should NOT retry and should propagate the failure.
+  // When error is false and done is false, the sender may retry the chunk.
+  bool error = 2;
+
+  // Suggested delay in milliseconds before retrying. Only meaningful when done=false
+  // and error=false. A value of 0 means retry immediately. Used for backpressure.
+  int64 retry_after_ms = 3;
+
+  // Human-readable error message for diagnostics. Only set when error=true.
+  string error_message = 4;
 }
 
 message IsLocalWorkerDeadRequest {

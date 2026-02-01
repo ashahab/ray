@@ -163,6 +163,7 @@ void MutableObjectProvider::HandlePushMutableObject(
 
     if (request_version <= highest_completed) {
       // Stale retry from already-completed write
+      chunks_received_counter_.Record(1, {{"Type", "stale"}});
       reply->set_done(true);
       return;
     }
@@ -177,21 +178,41 @@ void MutableObjectProvider::HandlePushMutableObject(
                            std::chrono::steady_clock::now() - it->second)
                            .count();
         if (elapsed > write_timeout_ms) {
-          RAY_LOG(ERROR) << "Mutable object write timeout for " << writer_object_id
-                         << " after " << elapsed << "ms. Write started but did not "
-                         << "complete within " << write_timeout_ms << "ms. "
-                         << "This may indicate lost chunks despite retries. "
-                         << "Aborting write to prevent hang.";
+          std::string error_msg =
+              "Mutable object write timeout for " + writer_object_id.Hex() + " after " +
+              std::to_string(elapsed) + "ms. Write started but did not complete within " +
+              std::to_string(write_timeout_ms) +
+              "ms. This may indicate lost chunks despite retries.";
+          RAY_LOG(ERROR) << error_msg << " Aborting write to prevent hang.";
+
+          // Get size for metrics before cleanup
+          uint64_t timed_out_size = 0;
+          auto size_it = write_total_size_.find(writer_object_id);
+          if (size_it != write_total_size_.end()) {
+            timed_out_size = size_it->second;
+          }
+
           // Clean up stalled write state
           written_so_far_.erase(writer_object_id);
           received_chunks_.erase(writer_object_id);
           write_acquired_.erase(writer_object_id);
           write_start_time_.erase(writer_object_id);
+          write_total_size_.erase(writer_object_id);
           // Note: We increment highest_completed to skip this version entirely
           // so future chunks for this version are treated as stale.
           highest_completed_version_[writer_object_id] = request_version;
-          // Signal failure - the sender's callback will be invoked with error
+
+          // Record timeout metrics (inside lock is OK, we're about to return)
+          active_writes_gauge_.Record(-1, {});
+          bytes_in_flight_gauge_.Record(-static_cast<double>(timed_out_size), {});
+          writes_completed_counter_.Record(1, {{"Status", "timeout"}});
+          write_duration_histogram_.Record(static_cast<double>(elapsed),
+                                           {{"Status", "timeout"}});
+
+          // Signal permanent failure - sender should NOT retry
           reply->set_done(true);
+          reply->set_error(true);
+          reply->set_error_message(error_msg);
           return;
         }
       }
@@ -212,6 +233,7 @@ void MutableObjectProvider::HandlePushMutableObject(
 
     if (received_chunks.find(chunk_key) != received_chunks.end()) {
       // Duplicate chunk - return status
+      chunks_received_counter_.Record(1, {{"Type", "duplicate"}});
       if (is_active_version) {
         auto written_it = written_so_far_.find(writer_object_id);
         uint64_t written = (written_it != written_so_far_.end()) ? written_it->second : 0;
@@ -225,6 +247,7 @@ void MutableObjectProvider::HandlePushMutableObject(
     // Step 4: For future versions, buffer only (don't write to backing store)
     if (!is_active_version) {
       received_chunks.insert(chunk_key);
+      chunks_received_counter_.Record(1, {{"Type", "future"}});
       reply->set_done(false);
       return;
     }
@@ -247,7 +270,11 @@ void MutableObjectProvider::HandlePushMutableObject(
       absl::MutexLock guard(&written_so_far_lock_);
       written_so_far_[writer_object_id] = 0;
       write_start_time_[writer_object_id] = std::chrono::steady_clock::now();
+      write_total_size_[writer_object_id] = total_data_size;
     }
+    // Record metrics for new write
+    active_writes_gauge_.Record(1, {});
+    bytes_in_flight_gauge_.Record(static_cast<double>(total_data_size), {});
     // First chunk to arrive (may not be offset 0 due to out-of-order delivery) -
     // acquire write lock and allocate backing store.
     // We set `metadata` to nullptr since the metadata is at the end of the object, which
@@ -310,6 +337,9 @@ void MutableObjectProvider::HandlePushMutableObject(
   // Copy chunk data to backing store.
   memcpy(object_backing_store->Data() + offset, request.data().data(), chunk_size);
 
+  // Record metric for new chunk received
+  chunks_received_counter_.Record(1, {{"Type", "new"}});
+
   // Mark this chunk as received only after successfully writing it.
   // This ensures retries are handled correctly even if WriteAcquire fails.
   {
@@ -337,9 +367,27 @@ void MutableObjectProvider::HandlePushMutableObject(
     // The entire object has been written, so call `WriteRelease()`.
     RAY_CHECK_OK(object_manager_->WriteRelease(info.local_object_id));
 
+    // Calculate write duration for metrics
+    int64_t write_duration_ms = 0;
+    uint64_t completed_size = 0;
+
     // Update tracking state after WriteRelease
     {
       absl::MutexLock guard(&written_so_far_lock_);
+
+      // Calculate duration
+      auto start_it = write_start_time_.find(writer_object_id);
+      if (start_it != write_start_time_.end()) {
+        write_duration_ms = std::chrono::duration_cast<std::chrono::milliseconds>(
+                                std::chrono::steady_clock::now() - start_it->second)
+                                .count();
+      }
+
+      // Get completed size for bytes_in_flight update
+      auto size_it = write_total_size_.find(writer_object_id);
+      if (size_it != write_total_size_.end()) {
+        completed_size = size_it->second;
+      }
 
       // Update highest completed version
       highest_completed_version_[writer_object_id] = request_version;
@@ -358,12 +406,20 @@ void MutableObjectProvider::HandlePushMutableObject(
       written_so_far_.erase(writer_object_id);
       write_acquired_.erase(writer_object_id);
       write_start_time_.erase(writer_object_id);
+      write_total_size_.erase(writer_object_id);
 
       // Clean up received_chunks_ entry if empty
       if (chunks.empty()) {
         received_chunks_.erase(writer_object_id);
       }
     }
+
+    // Record success metrics (outside lock)
+    active_writes_gauge_.Record(-1, {});
+    bytes_in_flight_gauge_.Record(-static_cast<double>(completed_size), {});
+    writes_completed_counter_.Record(1, {{"Status", "success"}});
+    write_duration_histogram_.Record(static_cast<double>(write_duration_ms),
+                                     {{"Status", "success"}});
 
     reply->set_done(true);
   } else {
